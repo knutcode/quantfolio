@@ -4,10 +4,11 @@ import styled from 'styled-components';
 import { Main } from './Styles';
 
 Highcharts.setOptions({
-	time: {
-		timezone: 'Europe/Oslo',
-	},
+	lang: { rangeSelectorZoom: '' },
+	accessibility: { enabled: false },
 });
+
+Highcharts.seriesTypes.line.prototype.drawLegendSymbol = Highcharts.seriesTypes.column.prototype.drawLegendSymbol;
 
 export const Chart = (props) => {
 	const rngNum = () => {
@@ -21,7 +22,23 @@ export const Chart = (props) => {
 		},
 
 		rangeSelector: {
-			selected: 2,
+			buttons: [
+				{
+					type: 'year',
+					count: 1,
+					text: '1Y',
+				},
+				{
+					type: 'year',
+					count: 5,
+					text: '5Y',
+				},
+				{
+					type: 'all',
+					text: 'MAX',
+				},
+			],
+			selected: 3, // all
 		},
 
 		scrollbar: {
@@ -32,7 +49,6 @@ export const Chart = (props) => {
 			enabled: true,
 			align: 'center',
 			verticalAlign: 'bottom',
-			layout: 'vertical',
 			x: 0,
 			y: 0,
 		},
@@ -45,14 +61,11 @@ export const Chart = (props) => {
 			type: 'datetime',
 		},
 
-		time: {
-			timezone: 'Europe/London',
-		},
-
 		plotOptions: {
 			series: {
 				marker: {
 					enabled: false,
+					symbol: 'circle',
 				},
 			},
 		},
