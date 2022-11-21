@@ -2,6 +2,8 @@ import Highcharts from 'highcharts/highstock';
 import HighchartsReact from 'highcharts-react-official';
 import styled from 'styled-components';
 import { Main } from './Styles';
+import { useEffect, useState } from 'react';
+import axios from 'axios';
 
 Highcharts.setOptions({
 	lang: { rangeSelectorZoom: '' },
@@ -10,12 +12,13 @@ Highcharts.setOptions({
 
 Highcharts.seriesTypes.line.prototype.drawLegendSymbol = Highcharts.seriesTypes.column.prototype.drawLegendSymbol;
 
+let lol = [];
+
 export const Chart = (props) => {
-	const rngNum = () => {
-		return Math.random() * 200;
-	};
-	const options = {
-		chart: {},
+	const [options, setOptions] = useState({
+		chart: {
+			zoomType: 'x',
+		},
 
 		navigator: {
 			enabled: false,
@@ -38,7 +41,7 @@ export const Chart = (props) => {
 					text: 'MAX',
 				},
 			],
-			selected: 3, // all
+			selected: 2, // all
 		},
 
 		scrollbar: {
@@ -57,10 +60,6 @@ export const Chart = (props) => {
 			borderWidth: 0,
 		},
 
-		xAxis: {
-			type: 'datetime',
-		},
-
 		plotOptions: {
 			series: {
 				marker: {
@@ -72,29 +71,38 @@ export const Chart = (props) => {
 
 		series: [
 			{
-				name: 'Stock 1',
-				data: [29.9, 71.5, 106.4, 129.2, 144.0, 176.0, 135.6, 148.5, 216.4, 194.1, 95.6, 54.4],
-				pointStart: Date.UTC(2016, 9, 22),
-				pointIntervalUnit: 'month',
-			},
-			{
-				name: 'Stock 2',
-				data: [29.9, 55, 106.4, 135.2, 144.0, 191.0, 120.6, 148.5, 190.4, 194.1, 50, 54.4],
-				pointStart: Date.UTC(2016, 9, 22),
-				pointIntervalUnit: 'month',
-			},
-			{
-				name: 'Stock 3',
-				data: [rngNum(), rngNum(), rngNum(), rngNum(), rngNum(), rngNum(), rngNum(), rngNum()],
-				pointStart: Date.UTC(2016, 9, 22),
-				pointIntervalUnit: 'month',
+				name: '',
+				data: [],
 			},
 		],
 
 		credits: {
 			enabled: false,
 		},
-	};
+	});
+
+	useEffect(() => {
+		axios.get('https://stockdata.test.quantfolio.dev/ticker').then((res) => {
+			res.data.tickers.forEach((e) => {
+				axios
+					.get(`https://stockdata.test.quantfolio.dev/ticker/${e}`)
+					.then((res) => {
+						const reversed = res.data.values
+							.map((element) => {
+								return [Date.parse(element.datetime), parseFloat(element.open)];
+							})
+							.reverse();
+						lol.push({ name: `${res.data.meta.symbol}`, data: reversed });
+					})
+					.then(() => {
+						setOptions({
+							...options,
+							series: lol,
+						});
+					});
+			});
+		});
+	}, []);
 
 	return (
 		<Main>
