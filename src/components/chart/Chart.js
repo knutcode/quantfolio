@@ -3,6 +3,7 @@ import HighchartsReact from 'highcharts-react-official';
 import styled from 'styled-components';
 import { Main } from './Styles';
 import axios from 'axios';
+import { useEffect } from 'react';
 
 Highcharts.setOptions({
 	lang: { rangeSelectorZoom: '' },
@@ -21,12 +22,14 @@ export const Chart = (props) => {
 		'https://stockdata.test.quantfolio.dev/ticker/MSFT:NASDAQ',
 	];
 
-	Promise.all(endpoints.map((endpoint) => axios.get(endpoint))).then(
-		axios.spread((...allData) => {
-			seriesData = { allData };
-			console.log(seriesData);
-		})
-	);
+	useEffect(() => {
+		Promise.all(endpoints.map((endpoint) => axios.get(endpoint))).then(
+			axios.spread((...allData) => {
+				seriesData = { allData };
+				console.log(seriesData);
+			})
+		);
+	}, []);
 
 	const options = {
 		chart: {
@@ -82,20 +85,7 @@ export const Chart = (props) => {
 			},
 		},
 
-		series: [
-			seriesData.allData.forEach((stock) => {
-				return {
-					name: stock.data.meta.symbol,
-					data: [
-						stock.data.values
-							.map((element) => {
-								return [Date.parse(element.datetime), parseFloat(element.open)];
-							})
-							.reverse(),
-					],
-				};
-			}),
-		],
+		series: [],
 
 		credits: {
 			enabled: false,
