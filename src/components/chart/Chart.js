@@ -2,7 +2,6 @@ import Highcharts from 'highcharts/highstock';
 import HighchartsReact from 'highcharts-react-official';
 import styled from 'styled-components';
 import { Main } from './Styles';
-import { useEffect, useState } from 'react';
 import axios from 'axios';
 
 Highcharts.setOptions({
@@ -15,7 +14,21 @@ Highcharts.seriesTypes.line.prototype.drawLegendSymbol = Highcharts.seriesTypes.
 let seriesData = [];
 
 export const Chart = (props) => {
-	const [options, setOptions] = useState({
+	let endpoints = [
+		'https://stockdata.test.quantfolio.dev/ticker/AAPL:NASDAQ',
+		'https://stockdata.test.quantfolio.dev/ticker/GOOGL:NASDAQ',
+		'https://stockdata.test.quantfolio.dev/ticker/ADBE:NASDAQ',
+		'https://stockdata.test.quantfolio.dev/ticker/MSFT:NASDAQ',
+	];
+
+	Promise.all(endpoints.map((endpoint) => axios.get(endpoint))).then(
+		axios.spread((...allData) => {
+			seriesData = { allData };
+			console.log(seriesData);
+		})
+	);
+
+	const options = {
 		chart: {
 			zoomType: 'x',
 		},
@@ -70,39 +83,24 @@ export const Chart = (props) => {
 		},
 
 		series: [
-			{
-				// name: '',
-				data: [],
-			},
+			seriesData.allData.forEach((stock) => {
+				return {
+					name: stock.data.meta.symbol,
+					data: [
+						stock.data.values
+							.map((element) => {
+								return [Date.parse(element.datetime), parseFloat(element.open)];
+							})
+							.reverse(),
+					],
+				};
+			}),
 		],
 
 		credits: {
 			enabled: false,
 		},
-	});
-
-	useEffect(() => {
-		axios.get('https://stockdata.test.quantfolio.dev/ticker').then((res) => {
-			res.data.tickers.forEach((e) => {
-				axios
-					.get(`https://stockdata.test.quantfolio.dev/ticker/${e}`)
-					.then((res) => {
-						const reversed = res.data.values
-							.map((element) => {
-								return [Date.parse(element.datetime), parseFloat(element.open)];
-							})
-							.reverse();
-						seriesData.push({ name: `${res.data.meta.symbol}`, data: reversed });
-					})
-					.then(() => {
-						setOptions({
-							...options,
-							series: seriesData,
-						});
-					});
-			});
-		});
-	}, []);
+	};
 
 	return (
 		<Main>
