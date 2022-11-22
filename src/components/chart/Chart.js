@@ -162,4 +162,7 @@ export const HighChartWrapper = styled(Chart)`
 	width: 100%;
 	flex: 1;
 	padding: 5rem;
+	@media (max-width: 720px) {
+		padding: 5rem 0;
+	}
 `;
