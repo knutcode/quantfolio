@@ -12,7 +12,7 @@ Highcharts.setOptions({
 
 Highcharts.seriesTypes.line.prototype.drawLegendSymbol = Highcharts.seriesTypes.column.prototype.drawLegendSymbol;
 
-let lol = [];
+let seriesData = [];
 
 export const Chart = (props) => {
 	const [options, setOptions] = useState({
@@ -71,7 +71,7 @@ export const Chart = (props) => {
 
 		series: [
 			{
-				name: '',
+				// name: '',
 				data: [],
 			},
 		],
@@ -92,12 +92,12 @@ export const Chart = (props) => {
 								return [Date.parse(element.datetime), parseFloat(element.open)];
 							})
 							.reverse();
-						lol.push({ name: `${res.data.meta.symbol}`, data: reversed });
+						seriesData.push({ name: `${res.data.meta.symbol}`, data: reversed });
 					})
 					.then(() => {
 						setOptions({
 							...options,
-							series: lol,
+							series: seriesData,
 						});
 					});
 			});
