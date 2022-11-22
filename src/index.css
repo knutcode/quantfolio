@@ -9,7 +9,18 @@ html {
 }
 
 body {
-	margin: 0;
 	font-size: 1.6rem;
+}
+
+html,
+body,
+section {
 	height: 100vh;
+	margin: 0;
+}
+
+section {
+	display: flex;
+	flex-flow: column;
+	align-items: center;
 }
