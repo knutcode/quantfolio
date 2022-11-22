@@ -6,6 +6,7 @@ export const Nav = styled.nav`
 	display: flex;
 	justify-content: center;
 	align-items: center;
+	width: 100%;
 `;
 
 export const Logo = styled.img`
