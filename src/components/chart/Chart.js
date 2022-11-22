@@ -1,9 +1,11 @@
 import Highcharts from 'highcharts/highstock';
 import HighchartsReact from 'highcharts-react-official';
+import noDataToDisplay from 'highcharts/modules/no-data-to-display';
 import styled from 'styled-components';
-import { Main } from './Styles';
-import { useEffect, useState } from 'react';
 import axios from 'axios';
+import { useEffect, useState } from 'react';
+
+noDataToDisplay(Highcharts);
 
 Highcharts.setOptions({
 	lang: { rangeSelectorZoom: '' },
@@ -18,6 +20,17 @@ export const Chart = (props) => {
 	const [options, setOptions] = useState({
 		chart: {
 			zoomType: 'x',
+		},
+
+		lang: {
+			noData: 'Loading stockdata...',
+		},
+		noData: {
+			style: {
+				fontWeight: 'bold',
+				fontSize: '18px',
+				color: 'teal',
+			},
 		},
 
 		navigator: {
@@ -48,6 +61,24 @@ export const Chart = (props) => {
 			enabled: false,
 		},
 
+		xAxis: {
+			title: {
+				text: 'Time',
+			},
+		},
+
+		yAxis: {
+			opposite: false,
+			title: {
+				text: 'Value',
+			},
+			labels: {
+				formatter: function () {
+					return '$' + this.value;
+				},
+			},
+		},
+
 		legend: {
 			enabled: true,
 			align: 'center',
@@ -58,6 +89,11 @@ export const Chart = (props) => {
 
 		tooltip: {
 			borderWidth: 0,
+			split: false,
+			sticky: false,
+			valuePrefix: '$',
+			valueSuffix: ' USD',
+			valueDecimals: 2,
 		},
 
 		plotOptions: {
@@ -66,15 +102,9 @@ export const Chart = (props) => {
 					enabled: false,
 					symbol: 'circle',
 				},
+				stickyTracking: false,
 			},
 		},
-
-		series: [
-			{
-				// name: '',
-				data: [],
-			},
-		],
 
 		credits: {
 			enabled: false,
@@ -82,43 +112,57 @@ export const Chart = (props) => {
 	});
 
 	useEffect(() => {
-		axios.get('https://stockdata.test.quantfolio.dev/ticker').then((res) => {
-			res.data.tickers.forEach((e) => {
-				axios
-					.get(`https://stockdata.test.quantfolio.dev/ticker/${e}`)
-					.then((res) => {
-						const reversed = res.data.values
-							.map((element) => {
-								return [Date.parse(element.datetime), parseFloat(element.open)];
-							})
-							.reverse();
-						seriesData.push({ name: `${res.data.meta.symbol}`, data: reversed });
-					})
-					.then(() => {
+		axios
+			.get('https://stockdata.test.quantfolio.dev/ticker')
+			.then((res) => {
+				const endpoints = res.data.tickers.map((ticker) => {
+					return `https://stockdata.test.quantfolio.dev/ticker/${ticker}`;
+				});
+				return endpoints;
+			})
+			.then((endpoints) => {
+				Promise.all(endpoints.map((endpoint) => axios.get(endpoint)))
+					.then(
+						axios.spread((...allData) => {
+							return allData;
+						})
+					)
+					.then((allData) => {
+						allData.forEach((stock) => {
+							const reversed = stock.data.values
+								.map((element) => {
+									return [Date.parse(element.datetime), parseFloat(element.open)];
+								})
+								.reverse();
+
+							seriesData.push({
+								name: stock.data.meta.symbol,
+								data: reversed,
+							});
+						});
 						setOptions({
 							...options,
 							series: seriesData,
 						});
 					});
 			});
-		});
 	}, []);
 
 	return (
-		<Main>
-			<HighchartsReact
-				highcharts={Highcharts}
-				options={options}
-				constructorType={'stockChart'}
-				containerProps={{ className: props.className }}
-			/>
-		</Main>
+		<HighchartsReact
+			highcharts={Highcharts}
+			options={options}
+			constructorType={'stockChart'}
+			containerProps={{ className: props.className }}
+		/>
 	);
 };
 
 export const HighChartWrapper = styled(Chart)`
-	/* .highcharts-plot-border {
-		fill: black !important;
-	} */
-	width: min(100%, 100rem);
+	width: 100%;
+	flex: 1;
+	padding: 5rem;
+	@media (max-width: 720px) {
+		padding: 5rem 0;
+	}
 `;
